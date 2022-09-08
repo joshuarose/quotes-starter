@@ -12,7 +12,7 @@ import (
 
 type quote struct {
 	ID     string `json:"id"`
-	Quote  string `json:"words"`
+	Quote  string `json:"quote"`
 	Author string `json:"author"`
 }
 
@@ -32,15 +32,49 @@ func getRandomQuote() quote {
 }
 
 func main() {
-	// fmt.Println(getRandomQuote())
 	fmt.Print(getRandomQuote())
 
 	router := gin.Default()
 	router.GET("/quotes", getQuotes)
-	router.Run("localhost:8080")
+	router.GET("/quotes/:id", getQuoteById)
+	router.POST("/quotes", postQuotes)
+	// router.DELETE("/quotes/:id", deleteQuotes)
+	router.Run("0.0.0.0:8080")
 
+}
+
+// postAlbums adds an album from JSON received in the request body.
+func postQuotes(c *gin.Context) {
+	var newQuote quote
+
+	// Call BindJSON to bind the received JSON to
+	// newAlbum.
+	if err := c.BindJSON(&newQuote); err != nil {
+		return
+	}
+
+	// Add the new album to the slice.
+	quotes = append(quotes, newQuote)
+	c.IndentedJSON(http.StatusCreated, newQuote)
 }
 
 func getQuotes(c *gin.Context) {
 	c.JSON(http.StatusOK, getRandomQuote())
 }
+
+func getQuoteById(c *gin.Context) {
+	id := c.Param("id")
+
+	for _, a := range quotes {
+		if a.ID == id {
+			c.JSON(http.StatusOK, a)
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "quote not found"})
+}
+
+// func deleteQuotes(c *gin.Context) {
+// 	c.JSON(http.StatusOK, getRandomQuote())
+
+// }
