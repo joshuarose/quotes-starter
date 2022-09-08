@@ -4,6 +4,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+
+	"fmt"
+	"math/rand"
+	"time"
 )
 
 type quote struct {
@@ -20,14 +24,23 @@ var quotes = []quote{
 	{ID: "5", Quote: "Don't panic.", Author: "Queen of England"},
 }
 
-//randomQuote :=
+func getRandomQuote() quote {
+	rand.Seed(time.Now().UnixNano())
+	randomNum := rand.Intn(len(quotes))
+	randomQuote := quotes[randomNum]
+	return randomQuote
+}
 
 func main() {
+	// fmt.Println(getRandomQuote())
+	fmt.Print(getRandomQuote())
+
 	router := gin.Default()
 	router.GET("/quotes", getQuotes)
 	router.Run("localhost:8080")
+
 }
 
 func getQuotes(c *gin.Context) {
-	c.IndentedJSON(http.StatusOK, quotes)
+	c.JSON(http.StatusOK, getRandomQuote())
 }
