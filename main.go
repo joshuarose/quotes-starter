@@ -21,6 +21,8 @@ var randomQuotes = []goQuotes{
 	{Quote: "Design the architecture, name the components, document the details.", Author: "Rob Pike"},
 	{Quote: "Don't just check errors, handle them gracefully.", Author: "Rob Pike"},
 	{Quote: "Avoid unused method receiver names", Author: "Kalese Carpenter"},
+	{Quote: "Gofmt's style is no one's favorite, yet gofmt is everyone's favorite", Author: "Rob Pike"},
+	{Quote: "For brands or words with more than 1 capital letter, lowercase all letters", Author: "Kalese Carpenter"},
 }
 
 func getRandomQuotes(context *gin.Context) {
