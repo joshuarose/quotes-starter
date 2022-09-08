@@ -1,25 +1,39 @@
 package main
 
 import (
-	"fmt"
+	"math/rand"
+	"net/http"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // goQuotes represents data about random quotes
 type goQuotes struct {
-	ID     string `json:"id"`
 	Quote  string `json:"quote"`
 	Author string `json:"author"`
 }
 
 var randomQuotes = []goQuotes{
-	{ID: "1", Quote: "Don't communicate by sharing memory, share memory by communicating.", Author: "Rob Pike"},
-	{ID: "2", Quote: "With the unsafe package there are no guarantees.", Author: "Rob Pike"},
-	{ID: "3", Quote: "A little copying is better than a little dependency.", Author: "Rob Pike"},
-	{ID: "4", Quote: "Design the architecture, name the components, document the details.", Author: "Rob Pike"},
-	{ID: "5", Quote: "Don't just check errors, handle them gracefully.", Author: "Rob Pike"},
-	{ID: "6", Quote: "Avoid unused method receiver names", Author: "Kalese Carpenter"},
+	{Quote: "Don't communicate by sharing memory, share memory by communicating.", Author: "Rob Pike"},
+	{Quote: "With the unsafe package there are no guarantees.", Author: "Rob Pike"},
+	{Quote: "A little copying is better than a little dependency.", Author: "Rob Pike"},
+	{Quote: "Design the architecture, name the components, document the details.", Author: "Rob Pike"},
+	{Quote: "Don't just check errors, handle them gracefully.", Author: "Rob Pike"},
+	{Quote: "Avoid unused method receiver names", Author: "Kalese Carpenter"},
 }
 
+func getRandomQuotes(context *gin.Context) {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(len(randomQuotes))
+	context.JSON(http.StatusOK, randomQuotes[randomNumber])
+}
+
+// goQuotes := (randomQuotes[randomNumber])
+
 func main() {
-	fmt.Println(randomQuotes)
+	router := gin.Default()
+	router.GET("/quotes", getRandomQuotes)
+	router.Run("0.0.0.0:8080")
+
 }
