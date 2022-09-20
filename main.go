@@ -6,7 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"fmt"
+
 	"math/rand"
+
 	"time"
 )
 
@@ -35,12 +37,13 @@ func main() {
 	fmt.Print(getRandomQuote())
 
 	router := gin.Default()
+
 	router.GET("/quotes", getQuotes)
 	router.GET("/quotes/:id", getQuoteById)
 	router.POST("/quotes", postQuotes)
 	// router.DELETE("/quotes/:id", deleteQuotes)
-	router.Run("0.0.0.0:8080")
 
+	router.Run("0.0.0.0:8080")
 }
 
 // postAlbums adds an album from JSON received in the request body.
@@ -59,12 +62,17 @@ func postQuotes(c *gin.Context) {
 }
 
 func getQuotes(c *gin.Context) {
-	c.JSON(http.StatusOK, getRandomQuote())
+	keySlice := c.Request.Header["X-Api-Key"]
+	keyString := keySlice[0]
+	if keyString == "COCKTAILSAUCE" {
+		c.JSON(http.StatusOK, getRandomQuote())
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+	}
 }
 
 func getQuoteById(c *gin.Context) {
 	id := c.Param("id")
-
 	for _, a := range quotes {
 		if a.ID == id {
 			c.JSON(http.StatusOK, a)
@@ -76,5 +84,7 @@ func getQuoteById(c *gin.Context) {
 
 // func deleteQuotes(c *gin.Context) {
 // 	c.JSON(http.StatusOK, getRandomQuote())
+// for (i=0; i <= len(quotes); i++) {
 
+// }
 // }
