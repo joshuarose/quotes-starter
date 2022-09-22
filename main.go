@@ -30,10 +30,11 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	router := gin.Default()
 	router.GET("/quotes", getRandomQuotes)
+	router.GET("/quotes/:id", getQuoteById)
 	router.Run("0.0.0.0:8080")
-
 }
 
+// Get A Random Quote From Map
 func getRandomQuotes(c *gin.Context) {
 	counter := 0
 	randomNumber := rand.Intn(len(randomQuote))
@@ -45,3 +46,16 @@ func getRandomQuotes(c *gin.Context) {
 		counter++
 	}
 }
+
+// Get Quote By ID
+func getQuoteById(c *gin.Context) {
+	id := c.Param("id")
+	singleQuote, exists := randomQuote[id]
+	if exists {
+		c.JSON(http.StatusOK, singleQuote)
+		return
+	}
+	c.JSON(http.StatusNotFound, gin.H{"status": "404 Not Found"}) // change this to 404 message
+}
+
+//Post New Quote
