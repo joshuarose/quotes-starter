@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // goQuotes represents data about random quotes
@@ -15,6 +17,7 @@ type goQuote struct {
 	Author string `json:"author"`
 }
 
+// Quotes Map
 var randomQuote = map[string]goQuote{
 	"374be3f1-956a-4169-874a-0632c09a2599": {ID: "374be3f1-956a-4169-874a-0632c09a2599", Quote: "Don't communicate by sharing memory, share memory by communicating.", Author: "Rob Pike"},
 	"a4539044-da8d-4064-bb05-2421abd4c77d": {ID: "a4539044-da8d-4064-bb05-2421abd4c77d", Quote: "With the unsafe package there are no guarantees.", Author: "Rob Pike"},
@@ -27,11 +30,16 @@ var randomQuote = map[string]goQuote{
 }
 
 func main() {
+	newID := uuid.New()
+	fmt.Println(newID)
+
 	rand.Seed(time.Now().UnixNano())
 	router := gin.Default()
 	router.GET("/quotes", getRandomQuotes)
 	router.GET("/quotes/:id", getQuoteById)
+	router.POST("/quotes", postNewQuote)
 	router.Run("0.0.0.0:8080")
+
 }
 
 // Get A Random Quote From Map
@@ -58,4 +66,15 @@ func getQuoteById(c *gin.Context) {
 	c.JSON(http.StatusNotFound, gin.H{"status": "404 Not Found"}) // change this to 404 message
 }
 
-//Post New Quote
+// Post New Quote
+func postNewQuote(c *gin.Context) {
+	var newQuote goQuote //generate a new UUID for POST route
+	if err := c.BindJSON(&newQuote); err != nil {
+		return
+	}
+	newID := uuid.New()
+	newQuote.ID = newID.String() //make it key to the value & id field of the value
+
+	randomQuote[newID.String()] = newQuote //putting quote struct into new ID
+	c.JSON(http.StatusCreated, newQuote)
+}
