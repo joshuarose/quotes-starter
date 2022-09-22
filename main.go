@@ -1,15 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 
-	"fmt"
-
 	"math/rand"
 
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type quote struct {
@@ -18,49 +19,92 @@ type quote struct {
 	Author string `json:"author"`
 }
 
-var quotes = []quote{
-	{ID: "1", Quote: "Reflection is never clear.", Author: "Joe Burrow"},
-	{ID: "2", Quote: "Don't just check errors, handle them gracefully.", Author: "Oprah"},
-	{ID: "3", Quote: "A little copying is better than a little dependency.", Author: "Vienna Erhart"},
-	{ID: "4", Quote: "The bigger the interface, the weaker the abstraction.", Author: "Josh Rose"},
-	{ID: "5", Quote: "Don't panic.", Author: "Queen of England"},
+type newQuotes struct {
+	ID string `json:"id"`
+}
+
+var quotess = map[uuid.UUID]quote{
+	getUUID(): {ID: "", Quote: "Reflection is never clear.", Author: "Joe Burrow"},
+	getUUID(): {ID: "", Quote: "Don't just check errors, handle them gracefully.", Author: "Oprah"},
+	getUUID(): {ID: "", Quote: "A little copying is better than a little dependency.", Author: "Vienna Erhart"},
+	getUUID(): {ID: "", Quote: "The bigger the interface, the weaker the abstraction.", Author: "Josh Rose"},
+	getUUID(): {ID: "", Quote: "Don't panic.", Author: "Queen of England"},
+}
+
+func getUUID() uuid.UUID {
+	return uuid.New()
+}
+
+var finalQuotess = map[uuid.UUID]quote{}
+
+func setIDs() {
+	for key, element := range quotess {
+		element.ID = uuid.UUID.String(key)
+		// fmt.Println(key, element)
+		finalQuotess[key] = element
+	}
+}
+
+var arrayOfUUIDs = []uuid.UUID{}
+
+func makeArray() {
+	for k, _ := range quotess {
+		arrayOfUUIDs = append(arrayOfUUIDs, k)
+	}
 }
 
 func getRandomQuote() quote {
 	rand.Seed(time.Now().UnixNano())
-	randomNum := rand.Intn(len(quotes))
-	randomQuote := quotes[randomNum]
-	return randomQuote
+	randomNum := rand.Intn(len(arrayOfUUIDs))
+	randomUUID := arrayOfUUIDs[randomNum]
+	return quotess[randomUUID]
 }
 
 func main() {
-	fmt.Print(getRandomQuote())
+
+	setIDs()
+
+	makeArray()
+
+	fmt.Println(finalQuotess)
 
 	router := gin.Default()
 
 	router.GET("/quotes", getQuotes)
 	router.GET("/quotes/:id", getQuoteById)
 	router.POST("/quotes", postQuotes)
-	// router.DELETE("/quotes/:id", deleteQuotes)
 
 	router.Run("0.0.0.0:8080")
 }
 
-// postAlbums adds an album from JSON received in the request body.
 func postQuotes(c *gin.Context) {
-	var newQuote quote
+	keySlice := c.Request.Header["X-Api-Key"]
+	keyString := keySlice[0]
+	if keyString == "COCKTAILSAUCE" {
+		var newQuote quote
+		// Call BindJSON to bind the received JSON to
+		if err := c.BindJSON(&newQuote); err != nil {
+			return
+		}
+		authorCheck := len(newQuote.Author) > 3
+		quoteCheck := len(newQuote.Quote) > 3
 
-	// Call BindJSON to bind the received JSON to
-	// newAlbum.
-	if err := c.BindJSON(&newQuote); err != nil {
-		return
+		if !authorCheck || !quoteCheck {
+			c.IndentedJSON(http.StatusBadRequest, gin.H{"status": "400"})
+			return
+		}
+		newUUID := getUUID()
+		quotess[newUUID] = newQuote
+		newQuote.ID = uuid.UUID.String(newUUID)
+		var UseThisUUID = []newQuotes{
+			{ID: newQuote.ID},
+		}
+		c.IndentedJSON(http.StatusCreated, UseThisUUID[0])
+		makeArray()
+	} else {
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
 	}
-
-	// Add the new album to the slice.
-	quotes = append(quotes, newQuote)
-	c.IndentedJSON(http.StatusCreated, newQuote)
 }
-
 func getQuotes(c *gin.Context) {
 	keySlice := c.Request.Header["X-Api-Key"]
 	keyString := keySlice[0]
@@ -72,19 +116,18 @@ func getQuotes(c *gin.Context) {
 }
 
 func getQuoteById(c *gin.Context) {
-	id := c.Param("id")
-	for _, a := range quotes {
-		if a.ID == id {
-			c.JSON(http.StatusOK, a)
-			return
+	keySlice := c.Request.Header["X-Api-Key"]
+	keyString := keySlice[0]
+	if keyString == "COCKTAILSAUCE" {
+		id := c.Param("id")
+		for k, v := range quotess {
+			if uuid.UUID.String(k) == id {
+				c.JSON(http.StatusOK, v)
+				return
+			}
 		}
+		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "quote not found"})
+	} else {
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "401"})
 	}
-	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "quote not found"})
 }
-
-// func deleteQuotes(c *gin.Context) {
-// 	c.JSON(http.StatusOK, getRandomQuote())
-// for (i=0; i <= len(quotes); i++) {
-
-// }
-// }
