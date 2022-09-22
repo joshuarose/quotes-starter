@@ -17,7 +17,7 @@ type goQuote struct {
 }
 
 // Quotes Map
-var randomQuote = map[string]goQuote{
+var quotesMap = map[string]goQuote{
 	"374be3f1-956a-4169-874a-0632c09a2599": {ID: "374be3f1-956a-4169-874a-0632c09a2599", Quote: "Don't communicate by sharing memory, share memory by communicating.", Author: "Rob Pike"},
 	"a4539044-da8d-4064-bb05-2421abd4c77d": {ID: "a4539044-da8d-4064-bb05-2421abd4c77d", Quote: "With the unsafe package there are no guarantees.", Author: "Rob Pike"},
 	"068faa87-9afa-4f7f-8aed-ff2d303c79e5": {ID: "068faa87-9afa-4f7f-8aed-ff2d303c79e5", Quote: "A little copying is better than a little dependency.", Author: "Rob Pike"},
@@ -32,7 +32,7 @@ func main() {
 
 	rand.Seed(time.Now().UnixNano())
 	router := gin.Default()
-	router.GET("/quotes", getRandomQuotes)
+	router.GET("/quotes", getRandomQuote)
 	router.GET("/quotes/:id", getQuoteById)
 	router.POST("/quotes", postNewQuote)
 	router.Run("0.0.0.0:8080")
@@ -40,11 +40,11 @@ func main() {
 }
 
 // Get A Random Quote From Map
-func getRandomQuotes(c *gin.Context) {
+func getRandomQuote(c *gin.Context) {
 	counter := 0
-	randomNumber := rand.Intn(len(randomQuote))
+	randomNumber := rand.Intn(len(quotesMap))
 
-	for _, v := range randomQuote {
+	for _, v := range quotesMap {
 		if counter == randomNumber {
 			c.JSON(http.StatusOK, &v)
 		}
@@ -55,7 +55,7 @@ func getRandomQuotes(c *gin.Context) {
 // Get Quote By ID
 func getQuoteById(c *gin.Context) {
 	id := c.Param("id")
-	singleQuote, exists := randomQuote[id]
+	singleQuote, exists := quotesMap[id]
 	if exists {
 		c.JSON(http.StatusOK, singleQuote)
 		return
@@ -72,9 +72,9 @@ func postNewQuote(c *gin.Context) {
 	newID := uuid.New()
 	newQuote.ID = newID.String() //make it key to the value & id field of the value
 
-	randomQuote[newID.String()] = newQuote //putting quote struct into new ID
+	quotesMap[newID.String()] = newQuote //putting quote struct into new ID
 	c.JSON(http.StatusCreated, newQuote)
-
+	// Check length of author and quote strings
 	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 {
 		c.AbortWithStatus(400)
 		return
