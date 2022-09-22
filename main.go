@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"time"
@@ -30,8 +29,6 @@ var randomQuote = map[string]goQuote{
 }
 
 func main() {
-	newID := uuid.New()
-	fmt.Println(newID)
 
 	rand.Seed(time.Now().UnixNano())
 	router := gin.Default()
@@ -77,4 +74,9 @@ func postNewQuote(c *gin.Context) {
 
 	randomQuote[newID.String()] = newQuote //putting quote struct into new ID
 	c.JSON(http.StatusCreated, newQuote)
+
+	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 {
+		c.AbortWithStatus(400)
+		return
+	}
 }
