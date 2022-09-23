@@ -74,9 +74,10 @@ func main() {
 }
 
 func postQuotes(c *gin.Context) {
-	keySlice := c.Request.Header["X-Api-Key"]
-	keyString := keySlice[0]
-	if keyString == "COCKTAILSAUCE" {
+	keySlice, exists := c.Request.Header["X-Api-Key"]
+	if !exists {
+		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
+	} else if keySlice[0] == "COCKTAILSAUCE" {
 		var newQuote quote
 		// Call BindJSON to bind the received JSON to
 		if err := c.BindJSON(&newQuote); err != nil {
@@ -102,6 +103,7 @@ func postQuotes(c *gin.Context) {
 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
 	}
 }
+
 func getQuotes(c *gin.Context) {
 	keySlice, exists := c.Request.Header["X-Api-Key"]
 	if !exists {
@@ -114,9 +116,10 @@ func getQuotes(c *gin.Context) {
 }
 
 func getQuoteById(c *gin.Context) {
-	keySlice := c.Request.Header["X-Api-Key"]
-	keyString := keySlice[0]
-	if keyString == "COCKTAILSAUCE" {
+	keySlice, exists := c.Request.Header["X-Api-Key"]
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+	} else if keySlice[0] == "COCKTAILSAUCE" {
 		id := c.Param("id")
 		for k, v := range finalQuotess {
 			if uuid.UUID.String(k) == id {
