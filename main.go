@@ -90,8 +90,9 @@ func postQuotes(c *gin.Context) {
 			return
 		}
 		newUUID := getUUID()
+		newID := uuid.UUID.String(newUUID)
 		finalQuotess[newUUID] = newQuote
-		newQuote.ID = uuid.UUID.String(newUUID)
+		newQuote.ID = newID
 		var UseThisUUID = []newQuotes{
 			{ID: newQuote.ID},
 		}
@@ -102,9 +103,10 @@ func postQuotes(c *gin.Context) {
 	}
 }
 func getQuotes(c *gin.Context) {
-	keySlice := c.Request.Header["X-Api-Key"]
-	keyString := keySlice[0]
-	if keyString == "COCKTAILSAUCE" {
+	keySlice, exists := c.Request.Header["X-Api-Key"]
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+	} else if keySlice[0] == "COCKTAILSAUCE" {
 		c.JSON(http.StatusOK, getRandomQuote())
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
