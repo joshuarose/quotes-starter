@@ -15,6 +15,9 @@ type goQuote struct {
 	Quote  string `json:"quote"`
 	Author string `json:"author"`
 }
+type ID struct {
+	ID string `json:"id"`
+}
 
 // Quotes Map
 var quotesMap = map[string]goQuote{
@@ -60,23 +63,26 @@ func getQuoteById(c *gin.Context) {
 		c.JSON(http.StatusOK, singleQuote)
 		return
 	}
-	c.JSON(http.StatusNotFound, gin.H{"status": "404 Not Found"}) // change this to 404 message
+	c.JSON(http.StatusNotFound, gin.H{"status": "404 Not Found"})
 }
 
 // Post New Quote
 func postNewQuote(c *gin.Context) {
 	var newQuote goQuote //generate a new UUID for POST route
-	if err := c.BindJSON(&newQuote); err != nil {
+	var newID ID
+	if err := c.BindJSON(&newQuote); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
 		return
 	}
-	newID := uuid.New()
-	newQuote.ID = newID.String() //make it key to the value & id field of the value
 
-	quotesMap[newID.String()] = newQuote //putting quote struct into new ID
-	c.JSON(http.StatusCreated, newQuote)
-	// Check length of author and quote strings
-	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 {
-		c.AbortWithStatus(400)
+	newUUID := uuid.New() // Generate new UUID
+	newID.ID = newUUID.String()
+	newQuote.ID = newUUID.String() //Make it key to the value & id field of the map
+
+	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 { // Check length of author and quote strings
+		c.JSON(http.StatusBadRequest, gin.H{"status": "400 Bad Request"})
 		return
+	} else {
+		quotesMap[newQuote.ID] = newQuote //Putting quote struct into new ID
+		c.JSON(http.StatusCreated, newID)
 	}
 }
