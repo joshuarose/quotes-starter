@@ -44,6 +44,7 @@ func main() {
 
 // Get A Random Quote From Map
 func getRandomQuote(c *gin.Context) {
+	// Check if Api Header Key exists
 	if !xApiKey(c) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
@@ -62,6 +63,7 @@ func getRandomQuote(c *gin.Context) {
 
 // Get Quote By ID
 func getQuoteById(c *gin.Context) {
+	// Check if Api Header Key exists
 	if !xApiKey(c) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
@@ -77,19 +79,21 @@ func getQuoteById(c *gin.Context) {
 
 // Post New Quote
 func postNewQuote(c *gin.Context) {
+	// Check if Api Header Key exists
 	if !xApiKey(c) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
 	}
-	var newQuote goQuote //generate a new UUID for POST route
+	//generate a new UUID for POST route
+	var newQuote goQuote
 	var newID ID
 	if err := c.BindJSON(&newQuote); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
 		return
 	}
-
-	newUUID := uuid.New() // Generate new UUID
+	// Generate new UUID
+	newUUID := uuid.New()
 	newID.ID = newUUID.String()
-	newQuote.ID = newUUID.String() //Make it key to the value & id field of the map
+	newQuote.ID = newUUID.String()
 
 	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 { // Check length of author and quote strings
 		c.JSON(http.StatusBadRequest, gin.H{"status": "400 Bad Request"})
@@ -99,10 +103,11 @@ func postNewQuote(c *gin.Context) {
 		c.JSON(http.StatusCreated, newID)
 	}
 }
-func xApiKey(c *gin.Context) bool {
-	// get Api Header Key
-	header, exists := c.Request.Header["X-Api-Key"]
 
+// get Api Header Key
+func xApiKey(c *gin.Context) bool {
+
+	header, exists := c.Request.Header["X-Api-Key"]
 	if exists {
 		if header[0] == "COCKTAILSAUCE" {
 			return exists
