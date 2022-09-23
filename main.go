@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +39,6 @@ var finalQuotess = map[uuid.UUID]quote{}
 func setIDs() {
 	for key, element := range quotess {
 		element.ID = uuid.UUID.String(key)
-		// fmt.Println(key, element)
 		finalQuotess[key] = element
 	}
 }
@@ -48,7 +46,7 @@ func setIDs() {
 var arrayOfUUIDs = []uuid.UUID{}
 
 func makeArray() {
-	for k, _ := range quotess {
+	for k, _ := range finalQuotess {
 		arrayOfUUIDs = append(arrayOfUUIDs, k)
 	}
 }
@@ -57,7 +55,7 @@ func getRandomQuote() quote {
 	rand.Seed(time.Now().UnixNano())
 	randomNum := rand.Intn(len(arrayOfUUIDs))
 	randomUUID := arrayOfUUIDs[randomNum]
-	return quotess[randomUUID]
+	return finalQuotess[randomUUID]
 }
 
 func main() {
@@ -65,8 +63,6 @@ func main() {
 	setIDs()
 
 	makeArray()
-
-	fmt.Println(finalQuotess)
 
 	router := gin.Default()
 
@@ -94,7 +90,7 @@ func postQuotes(c *gin.Context) {
 			return
 		}
 		newUUID := getUUID()
-		quotess[newUUID] = newQuote
+		finalQuotess[newUUID] = newQuote
 		newQuote.ID = uuid.UUID.String(newUUID)
 		var UseThisUUID = []newQuotes{
 			{ID: newQuote.ID},
@@ -120,7 +116,7 @@ func getQuoteById(c *gin.Context) {
 	keyString := keySlice[0]
 	if keyString == "COCKTAILSAUCE" {
 		id := c.Param("id")
-		for k, v := range quotess {
+		for k, v := range finalQuotess {
 			if uuid.UUID.String(k) == id {
 				c.JSON(http.StatusOK, v)
 				return
