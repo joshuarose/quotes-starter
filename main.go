@@ -44,6 +44,11 @@ func main() {
 
 // Get A Random Quote From Map
 func getRandomQuote(c *gin.Context) {
+	if !xApiKey(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+		return
+	}
+
 	counter := 0
 	randomNumber := rand.Intn(len(quotesMap))
 
@@ -57,6 +62,10 @@ func getRandomQuote(c *gin.Context) {
 
 // Get Quote By ID
 func getQuoteById(c *gin.Context) {
+	if !xApiKey(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+		return
+	}
 	id := c.Param("id")
 	singleQuote, exists := quotesMap[id]
 	if exists {
@@ -68,6 +77,10 @@ func getQuoteById(c *gin.Context) {
 
 // Post New Quote
 func postNewQuote(c *gin.Context) {
+	if !xApiKey(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+		return
+	}
 	var newQuote goQuote //generate a new UUID for POST route
 	var newID ID
 	if err := c.BindJSON(&newQuote); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
@@ -85,4 +98,15 @@ func postNewQuote(c *gin.Context) {
 		quotesMap[newQuote.ID] = newQuote //Putting quote struct into new ID
 		c.JSON(http.StatusCreated, newID)
 	}
+}
+func xApiKey(c *gin.Context) bool {
+	// get Api Header Key
+	header, exists := c.Request.Header["X-Api-Key"]
+
+	if exists {
+		if header[0] == "COCKTAILSAUCE" {
+			return exists
+		}
+	}
+	return exists
 }
