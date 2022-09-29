@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS quotes;
+
 CREATE TABLE quotes (
     uuidkey varchar(36) PRIMARY KEY,
     quote varchar(1500) NOT NULL,
