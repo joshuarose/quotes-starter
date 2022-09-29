@@ -1,7 +1,7 @@
 CREATE TABLE quotes (
     uuidkey varchar(36) PRIMARY KEY,
     quote varchar(1500) NOT NULL,
-    author varchar(50) NOT NULL,
+    author varchar(50) NOT NULL
 );
 
 INSERT INTO quotes (uuidkey, quote, author)
