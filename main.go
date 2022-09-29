@@ -79,7 +79,6 @@ func postQuotes(c *gin.Context) {
 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
 	} else if keySlice[0] == "COCKTAILSAUCE" {
 		var newQuote quote
-		// Call BindJSON to bind the received JSON to
 		if err := c.BindJSON(&newQuote); err != nil {
 			return
 		}
