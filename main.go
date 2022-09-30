@@ -11,12 +11,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"math/rand"
-
-	"time"
-
-	"github.com/google/uuid"
-
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
@@ -30,49 +24,47 @@ type newQuotes struct {
 	ID string `json:"id"`
 }
 
-var quotess = map[uuid.UUID]quote{
-	getUUID(): {ID: "", Quote: "Reflection is never clear.", Author: "Joe Burrow"},
-	getUUID(): {ID: "", Quote: "Don't just check errors, handle them gracefully.", Author: "Oprah"},
-	getUUID(): {ID: "", Quote: "A little copying is better than a little dependency.", Author: "Vienna Erhart"},
-	getUUID(): {ID: "", Quote: "The bigger the interface, the weaker the abstraction.", Author: "Josh Rose"},
-	getUUID(): {ID: "", Quote: "Don't panic.", Author: "Queen of England"},
-}
+// var quotess = map[uuid.UUID]quote{
+// 	getUUID(): {ID: "", Quote: "Reflection is never clear.", Author: "Joe Burrow"},
+// 	getUUID(): {ID: "", Quote: "Don't just check errors, handle them gracefully.", Author: "Oprah"},
+// 	getUUID(): {ID: "", Quote: "A little copying is better than a little dependency.", Author: "Vienna Erhart"},
+// 	getUUID(): {ID: "", Quote: "The bigger the interface, the weaker the abstraction.", Author: "Josh Rose"},
+// 	getUUID(): {ID: "", Quote: "Don't panic.", Author: "Queen of England"},
+// }
 
 var dbPool *sql.DB
 
-func getUUID() uuid.UUID {
-	return uuid.New()
-}
+// func getUUID() uuid.UUID {
+// 	return uuid.New()
+// }
 
-var finalQuotess = map[uuid.UUID]quote{}
+// var finalQuotess = map[uuid.UUID]quote{}
 
-func setIDs() {
-	for key, element := range quotess {
-		element.ID = uuid.UUID.String(key)
-		finalQuotess[key] = element
-	}
-}
+// func setIDs() {
+// 	for key, element := range quotess {
+// 		element.ID = uuid.UUID.String(key)
+// 		finalQuotess[key] = element
+// 	}
+// }
 
-var arrayOfUUIDs = []uuid.UUID{}
+// var arrayOfUUIDs = []uuid.UUID{}
 
-func makeArray() {
-	for k, _ := range finalQuotess {
-		arrayOfUUIDs = append(arrayOfUUIDs, k)
-	}
-}
+// func makeArray() {
+// 	for k, _ := range finalQuotess {
+// 		arrayOfUUIDs = append(arrayOfUUIDs, k)
+// 	}
+// }
 
-func getRandomQuote() quote {
-	rand.Seed(time.Now().UnixNano())
-	randomNum := rand.Intn(len(arrayOfUUIDs))
-	randomUUID := arrayOfUUIDs[randomNum]
-	return finalQuotess[randomUUID]
-}
+// func getRandomQuote() quote {
+// 	rand.Seed(time.Now().UnixNano())
+// 	randomNum := rand.Intn(len(arrayOfUUIDs))
+// 	randomUUID := arrayOfUUIDs[randomNum]
+// 	return finalQuotess[randomUUID]
+// }
 
 func manageHeader(c *gin.Context) bool {
 	headers := c.Request.Header
 	header, exists := headers["X-Api-Key"]
-	// fmt.Println(header)
-
 	if exists {
 		if header[0] == "COCKTAILSAUCE" {
 			return true
@@ -118,45 +110,73 @@ VALUES ($1, $2, $3)`
 			c.IndentedJSON(http.StatusBadRequest, "message: An error occurred")
 		}
 	}
+	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+}
+
+func deleteQuotesByIDSQL(c *gin.Context) {
+	if manageHeader(c) {
+		id := c.Param("id")
+		statement := `DELETE FROM quotes WHERE uuidkey=$1 `
+		_, err2 := dbPool.Exec(statement, id)
+		if err2 != nil {
+			log.Println(err2)
+		}
+		fmt.Println("data deleted")
+		c.JSON(http.StatusAccepted, "message: Successfully deleted")
+	}
+	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+}
+
+func getRandomQuote(c *gin.Context) {
+	if manageHeader(c) {
+		row := dbPool.QueryRow("select * from quotes order by rand() limit 1")
+		q := &quote{}
+		err := row.Scan(&q.ID, &q.Quote, &q.Author)
+		if err != nil {
+			log.Println(err)
+		}
+		c.JSON(http.StatusOK, q)
+		return
+	}
+	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 }
 
 func main() {
-
+	defer dbPool.Close()
 	connectUnixSocket()
 
-	setIDs()
+	// setIDs()
 
-	makeArray()
+	// makeArray()
 
 	router := gin.Default()
 
-	router.GET("/quotes", getQuotes)
+	// router.GET("/quotes", getQuotes)
 	// router.GET("/quotes/:id", getQuoteById)
 	router.GET("/quotes/:id", getQuoteByIDSQL)
 	// router.POST("/quotes", postQuotes)
 	router.POST("/quotes", postQuoteSQL)
-
+	router.DELETE("/quotes/:id", deleteQuotesByIDSQL)
+	router.GET("/quotes", getRandomQuote)
 	// if err := dbPool.Ping(); err != nil {
 	// 	log.Fatalf("unable to reach database: %v", err)
 	// }
 	// fmt.Println("database is reachable")
-
 	router.Run("0.0.0.0:8080")
-
 }
 
 //
 
-func getQuotes(c *gin.Context) {
-	keySlice, exists := c.Request.Header["X-Api-Key"]
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	} else if keySlice[0] == "COCKTAILSAUCE" {
-		c.JSON(http.StatusOK, getRandomQuote())
-	} else {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	}
-}
+// func getQuotes(c *gin.Context) {
+// 	keySlice, exists := c.Request.Header["X-Api-Key"]
+// 	if !exists {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+// 	} else if keySlice[0] == "COCKTAILSAUCE" {
+// 		c.JSON(http.StatusOK, getRandomQuote())
+// 	} else {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+// 	}
+// }
 
 // connectUnixSocket initializes a Unix socket connection pool for
 // a Cloud SQL instance of Postgres.
