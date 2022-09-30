@@ -52,6 +52,7 @@ func main() {
 	router.GET("/quotes", getRandomQuote)
 	router.GET("/quotes/:id", getQuoteByIdSQL) // ????????
 	router.POST("/quotes", postNewQuote)
+	router.DELETE("/quotes", deleteQuote)
 	router.Run("0.0.0.0:8080")
 
 }
@@ -92,7 +93,6 @@ func getRandomQuote(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
 	}
-
 	counter := 0
 	randomNumber := rand.Intn(len(quotesMap))
 
@@ -120,82 +120,37 @@ func getQuoteByIdSQL(c *gin.Context) {
 	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 }
 
-// Get Quote By ID
-/*func getQuoteById(c *gin.Context) {
-	// Check if Api Header Key exists
-	if !xApiKey(c) {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
-		return
-	}
-	id := c.Param("id")
-	singleQuote, exists := quotesMap[id]
-	if exists {
-		c.JSON(http.StatusOK, singleQuote)
-		return
-	}
-	c.JSON(http.StatusNotFound, gin.H{"status": "404 Not Found"})
-}*/
-
-// Post New Quote
-/*func postNewQuote(c *gin.Context) {
-	// Check if Api Header Key exists
-	if !xApiKey(c) {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
-		return
-	}
-	//generate a new UUID for POST route
-	var newQuote quote
-	var newID ID
-	if err := c.BindJSON(&newQuote); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
-		return
-	}
-	// Generate new UUID
-	newUUID := uuid.New()
-	newID.ID = newUUID.String()
-	newQuote.ID = newUUID.String()
-
-	if (len(newQuote.Quote)) < 3 || (len(newQuote.Author)) < 3 { // Check length of author and quote strings
-		c.JSON(http.StatusBadRequest, gin.H{"status": "400 Bad Request"})
-		return
-	} else {
-		quotesMap[newQuote.ID] = newQuote //Putting quote struct into new ID
-		c.JSON(http.StatusCreated, newID)
-	}
-}*/
-
+// Create New Quote
 func postNewQuote(c *gin.Context) {
 	// Check if Api Header Key exists
-	// if !xApiKey(c) {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
-	// 	return
-	// }
+	if !xApiKey(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+		return
+	}
+
 	q := &quote{} //taking JSON Body in post To insert into database
 	var newID ID
 	newID.ID = uuid.New().String()
-	if err := c.BindJSON(&q); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
+	if err := c.BindJSON(&q); err != nil { //passes the HTTP status code 400 to the context and then returns a pointer or an error.
 		return
 	}
+	// Insert new Quote into Table
 	sqlStatement := `INSERT INTO quotes (id, Quote, Author) VALUES ($1, $2, $3)`
 	_, err := db.Exec(sqlStatement, &newID.ID, &q.Quote, &q.Author)
 
 	if err != nil {
 		fmt.Println("Error Error Error")
 	}
+
+	c.JSON(http.StatusCreated, newID)
+
+	if (len(q.Quote)) < 3 || (len(q.Author)) < 3 { // Check length of author and quote strings
+		c.JSON(http.StatusBadRequest, gin.H{"status": "400 Bad Request"})
+		return
+	}
+
 	c.JSON(http.StatusCreated, newID)
 }
-
-/* newUUID :=
-
-
-	// Insert new Quote into database
-	sqlStatement := `INSERT INTO quotes (id, Quote, Author)
-	VALUES ($id, $Quote, $Author)`
-	_, err = db.Exec
-
-	if err != nil {
-		panic(err)
-	}
-} */
 
 // Get Api Header Key
 func xApiKey(c *gin.Context) bool {
@@ -207,4 +162,20 @@ func xApiKey(c *gin.Context) bool {
 		}
 	}
 	return exists
+}
+
+// Delete Quote
+func deleteQuote(c *gin.Context) {
+	if xApiKey(c) {
+		id := c.Param("id")
+		row := db.QueryRow(fmt.Sprintf("delete from quotes where id = '%s'", id))
+		q := &quote{}
+		err := row.Scan(&q.ID, &q.Quote, &q.Author)
+		if err != nil {
+			log.Println(err)
+		}
+		c.JSON(http.StatusNoContent, q)
+		return
+	}
+
 }
