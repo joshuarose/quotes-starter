@@ -2,7 +2,9 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -66,11 +68,61 @@ func getRandomQuote() quote {
 	return finalQuotess[randomUUID]
 }
 
-func main() {
-	connectUnixSocket()
+func manageHeader(c *gin.Context) bool {
+	headers := c.Request.Header
+	header, exists := headers["X-Api-Key"]
+	// fmt.Println(header)
 
-	row := dbPool.QueryRow("SELECT * FROM quotes LIMIT 1;")
-	fmt.Println(row)
+	if exists {
+		if header[0] == "COCKTAILSAUCE" {
+			return true
+		}
+	}
+	return false
+}
+
+func getQuoteByIDSQL(c *gin.Context) {
+	if manageHeader(c) {
+		id := c.Param("id")
+		row := dbPool.QueryRow(fmt.Sprintf("select uuidkey, quote, author from quotes where uuidkey = '%s'", id))
+		q := &quote{}
+		err := row.Scan(&q.ID, &q.Quote, &q.Author)
+		if err != nil {
+			log.Println(err)
+		}
+		c.JSON(http.StatusOK, q)
+		return
+	}
+	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+}
+
+func postQuoteSQL(c *gin.Context) {
+	if manageHeader(c) {
+		jsonData, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			fmt.Print(err)
+		}
+		var postQuote quote
+		json.Unmarshal(jsonData, &postQuote)
+
+		sqlStatement := `
+INSERT INTO quotes (uuidkey, quote, author)
+VALUES ($1, $2, $3)`
+		_, err = dbPool.Exec(sqlStatement, postQuote.ID, postQuote.Quote, postQuote.Author)
+		formattedID := postQuote.ID
+		var returnThisUUID = []newQuotes{
+			{ID: formattedID},
+		}
+		c.JSON(http.StatusCreated, returnThisUUID[0])
+		if err != nil {
+			c.IndentedJSON(http.StatusBadRequest, "message: An error occurred")
+		}
+	}
+}
+
+func main() {
+
+	connectUnixSocket()
 
 	setIDs()
 
@@ -79,47 +131,21 @@ func main() {
 	router := gin.Default()
 
 	router.GET("/quotes", getQuotes)
-	router.GET("/quotes/:id", getQuoteById)
-	router.POST("/quotes", postQuotes)
+	// router.GET("/quotes/:id", getQuoteById)
+	router.GET("/quotes/:id", getQuoteByIDSQL)
+	// router.POST("/quotes", postQuotes)
+	router.POST("/quotes", postQuoteSQL)
 
-	if err := dbPool.Ping(); err != nil {
-		log.Fatalf("unable to reach database: %v", err)
-	}
-	fmt.Println("database is reachable")
+	// if err := dbPool.Ping(); err != nil {
+	// 	log.Fatalf("unable to reach database: %v", err)
+	// }
+	// fmt.Println("database is reachable")
 
 	router.Run("0.0.0.0:8080")
 
 }
 
-func postQuotes(c *gin.Context) {
-	keySlice, exists := c.Request.Header["X-Api-Key"]
-	if !exists {
-		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	} else if keySlice[0] == "COCKTAILSAUCE" {
-		var newQuote quote
-		if err := c.BindJSON(&newQuote); err != nil {
-			return
-		}
-		authorCheck := len(newQuote.Author) > 3
-		quoteCheck := len(newQuote.Quote) > 3
-
-		if !authorCheck || !quoteCheck {
-			c.IndentedJSON(http.StatusBadRequest, gin.H{"status": "400"})
-			return
-		}
-		newUUID := getUUID()
-		newID := uuid.UUID.String(newUUID)
-		finalQuotess[newUUID] = newQuote
-		newQuote.ID = newID
-		var UseThisUUID = []newQuotes{
-			{ID: newQuote.ID},
-		}
-		c.IndentedJSON(http.StatusCreated, UseThisUUID[0])
-		makeArray()
-	} else {
-		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	}
-}
+//
 
 func getQuotes(c *gin.Context) {
 	keySlice, exists := c.Request.Header["X-Api-Key"]
@@ -129,24 +155,6 @@ func getQuotes(c *gin.Context) {
 		c.JSON(http.StatusOK, getRandomQuote())
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	}
-}
-
-func getQuoteById(c *gin.Context) {
-	keySlice, exists := c.Request.Header["X-Api-Key"]
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
-	} else if keySlice[0] == "COCKTAILSAUCE" {
-		id := c.Param("id")
-		for k, v := range finalQuotess {
-			if uuid.UUID.String(k) == id {
-				c.JSON(http.StatusOK, v)
-				return
-			}
-		}
-		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "quote not found"})
-	} else {
-		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "401"})
 	}
 }
 
@@ -160,10 +168,7 @@ func connectUnixSocket() error {
 		}
 		return v
 	}
-	// Note: Saving credentials in environment variables is convenient, but not
-	// secure - consider a more secure solution such as
-	// Cloud Secret Manager (https://cloud.google.com/secret-manager) to help
-	// keep secrets safe.
+
 	var (
 		dbUser         = mustGetenv("DB_USER")              // e.g. 'my-db-user'
 		dbPwd          = mustGetenv("DB_PWD")               // e.g. 'my-db-password'
@@ -174,16 +179,63 @@ func connectUnixSocket() error {
 	dbURI := fmt.Sprintf("user=%s password=%s database=%s host=%s",
 		dbUser, dbPwd, dbName, unixSocketPath)
 
-	fmt.Println(dbURI)
+	// fmt.Println(dbURI)
 
 	// dbPool is the pool of database connections.
 	var err error
 	dbPool, err = sql.Open("pgx", dbURI)
-	if err != nil {
+	if err == nil {
+		fmt.Println("no error")
 		return fmt.Errorf("sql.Open: %v", err)
+
 	}
-
-	// ...
-
 	return err
 }
+
+// func getQuoteById(c *gin.Context) {
+// 	keySlice, exists := c.Request.Header["X-Api-Key"]
+// 	if !exists {
+// 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401"})
+// 	} else if keySlice[0] == "COCKTAILSAUCE" {
+// 		id := c.Param("id")
+// 		for k, v := range finalQuotess {
+// 			if uuid.UUID.String(k) == id {
+// 				c.JSON(http.StatusOK, v)
+// 				return
+// 			}
+// 		}
+// 		c.IndentedJSON(http.StatusNotFound, gin.H{"message": "quote not found"})
+// 	} else {
+// 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"message": "401"})
+// 	}
+// }
+
+//func postQuotes(c *gin.Context) {
+// 	keySlice, exists := c.Request.Header["X-Api-Key"]
+// 	if !exists {
+// 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
+// 	} else if keySlice[0] == "COCKTAILSAUCE" {
+// 		var newQuote quote
+// 		if err := c.BindJSON(&newQuote); err != nil {
+// 			return
+// 		}
+// 		authorCheck := len(newQuote.Author) > 3
+// 		quoteCheck := len(newQuote.Quote) > 3
+
+// 		if !authorCheck || !quoteCheck {
+// 			c.IndentedJSON(http.StatusBadRequest, gin.H{"status": "400"})
+// 			return
+// 		}
+// 		newUUID := getUUID()
+// 		newID := uuid.UUID.String(newUUID)
+// 		finalQuotess[newUUID] = newQuote
+// 		newQuote.ID = newID
+// 		var UseThisUUID = []newQuotes{
+// 			{ID: newQuote.ID},
+// 		}
+// 		c.IndentedJSON(http.StatusCreated, UseThisUUID[0])
+// 		makeArray()
+// 	} else {
+// 		c.IndentedJSON(http.StatusUnauthorized, gin.H{"status": "401"})
+// 	}
+// }
