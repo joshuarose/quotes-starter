@@ -137,7 +137,7 @@ func getQuoteByIdSQL(c *gin.Context) {
 }*/
 
 // Post New Quote
-func postNewQuote(c *gin.Context) {
+/*func postNewQuote(c *gin.Context) {
 	// Check if Api Header Key exists
 	if !xApiKey(c) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
@@ -161,7 +161,41 @@ func postNewQuote(c *gin.Context) {
 		quotesMap[newQuote.ID] = newQuote //Putting quote struct into new ID
 		c.JSON(http.StatusCreated, newID)
 	}
+}*/
+
+func postNewQuote(c *gin.Context) {
+	// Check if Api Header Key exists
+	// if !xApiKey(c) {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+	// 	return
+	// }
+	q := &quote{} //taking JSON Body in post To insert into database
+	var newID ID
+	newID.ID = uuid.New().String()
+	if err := c.BindJSON(&q); err != nil { //c.BindJSON passes the HTTP status code 400 to the context and then returns a pointer or an error.
+		return
+	}
+	sqlStatement := `INSERT INTO quotes (id, Quote, Author) VALUES ($1, $2, $3)`
+	_, err := db.Exec(sqlStatement, &newID.ID, &q.Quote, &q.Author)
+
+	if err != nil {
+		fmt.Println("Error Error Error")
+	}
+	c.JSON(http.StatusCreated, newID)
 }
+
+/* newUUID :=
+
+
+	// Insert new Quote into database
+	sqlStatement := `INSERT INTO quotes (id, Quote, Author)
+	VALUES ($id, $Quote, $Author)`
+	_, err = db.Exec
+
+	if err != nil {
+		panic(err)
+	}
+} */
 
 // Get Api Header Key
 func xApiKey(c *gin.Context) bool {
