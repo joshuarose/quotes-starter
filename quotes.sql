@@ -1,11 +1,13 @@
+DROP TABLE IF EXISTS quotes;-- to make it run only once  
+
 CREATE TABLE quotes (
-Id varchar PRIMARY KEY,
-  Phrase varchar,
+id varchar PRIMARY KEY,
+  Quote varchar, --changed this from Phrase, Do I need to update in Database?
   Author varchar NOT NULL
 );
 
 INSERT 
-    INTO quotes (Id, Phrase, Author)
+    INTO quotes (id, quote, author)
 VALUES ('374be3f1-956a-4169-874a-0632c09a2599', 'Don''t communicate by sharing memory, share memory by communicating','Rob Pike'), --double single quote to escape error
 ('a4539044-da8d-4064-bb05-2421abd4c77d', 'With the unsafe package there are no guarantees.', 'Rob Pike'),
 ('068faa87-9afa-4f7f-8aed-ff2d303c79e5', 'A little copying is better than a little dependency.', 'Rob Pike'),
