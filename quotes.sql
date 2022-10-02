@@ -2,8 +2,8 @@ DROP TABLE IF EXISTS quotes;-- to make it run only once
 
 CREATE TABLE quotes (
 id varchar PRIMARY KEY,
-  Quote varchar, --changed this from Phrase, Do I need to update in Database?
-  Author varchar NOT NULL
+  quote varchar, --changed this from Phrase, Do I need to update in Database?
+  author varchar NOT NULL
 );
 
 INSERT 
