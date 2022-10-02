@@ -42,26 +42,7 @@ func manageHeader(c *gin.Context) bool {
 	return false
 }
 
-func getQuoteByIDSQL(c *gin.Context) {
-	if manageHeader(c) {
-		id := c.Param("id")
-		row := dbPool.QueryRow(fmt.Sprintf("select uuidkey, quote, author from quotes where uuidkey = '%s'", id))
-		q := &quote{}
-		switch err := row.Scan(&q.ID, &q.Quote, &q.Author); err {
-		case sql.ErrNoRows:
-			c.JSON(http.StatusNotFound, "message: ID does not exist")
-			return
-		case nil:
-			c.JSON(http.StatusOK, q)
-			return
-		default:
-			c.JSON(http.StatusNotFound, "message: Something went wrong")
-		}
-	}
-	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
-}
-
-func postQuoteSQL(c *gin.Context) {
+func postQuote(c *gin.Context) {
 	if manageHeader(c) {
 		jsonData, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
@@ -92,7 +73,7 @@ VALUES ($1, $2, $3)`
 
 }
 
-func deleteQuotesByIDSQL(c *gin.Context) {
+func deleteQuotesByID(c *gin.Context) {
 	if manageHeader(c) {
 		id := c.Param("id")
 		statement := `DELETE FROM quotes WHERE uuidkey=$1 `
@@ -109,15 +90,33 @@ func deleteQuotesByIDSQL(c *gin.Context) {
 
 func getRandomQuote(c *gin.Context) {
 	if manageHeader(c) {
-		row := dbPool.QueryRow("select row from quotes order by rand() limit 1")
+		row := dbPool.QueryRow(fmt.Sprintln("select uuidkey, quote, author from quotes order by random() limit 1"))
 		q := &quote{}
-		fmt.Println(q)
 		err := row.Scan(&q.ID, &q.Quote, &q.Author)
 		if err != nil {
 			log.Println(err)
 		}
 		c.JSON(http.StatusOK, q)
-		return
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+	}
+}
+
+func getQuoteByID(c *gin.Context) {
+	if manageHeader(c) {
+		id := c.Param("id")
+		row := dbPool.QueryRow(fmt.Sprintf("select uuidkey, quote, author from quotes where uuidkey = '%s'", id))
+		q := &quote{}
+		switch err := row.Scan(&q.ID, &q.Quote, &q.Author); err {
+		case sql.ErrNoRows:
+			c.JSON(http.StatusNotFound, "message: ID does not exist")
+			return
+		case nil:
+			c.JSON(http.StatusOK, q)
+			return
+		default:
+			c.JSON(http.StatusNotFound, "message: Something went wrong")
+		}
 	}
 	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
 }
@@ -128,9 +127,9 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/quotes/:id", getQuoteByIDSQL)
-	router.POST("/quotes", postQuoteSQL)
-	router.DELETE("/quotes/:id", deleteQuotesByIDSQL)
+	router.GET("/quotes/:id", getQuoteByID)
+	router.POST("/quotes", postQuote)
+	router.DELETE("/quotes/:id", deleteQuotesByID)
 	router.GET("/quotes", getRandomQuote)
 	router.Run("0.0.0.0:8080")
 }
