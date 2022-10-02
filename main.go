@@ -80,7 +80,7 @@ func getRandomQuote(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
 	}
-	row := db.QueryRow("select id from quotes order by rand() limit 1")
+	row := db.QueryRow(fmt.Sprintln("SELECT id, quote, author FROM quotes ORDER BY RANDOM() LIMIT 1"))
 	q := &quote{}
 	err := row.Scan(&q.ID, &q.Quote, &q.Author)
 	if err != nil {
@@ -89,18 +89,6 @@ func getRandomQuote(c *gin.Context) {
 	c.JSON(http.StatusOK, q)
 
 }
-
-//return
-
-/*counter := 0
-randomNumber := rand.Intn(len(quotesMap))
-
-for _, v := range quotesMap {
-	if counter == randomNumber {
-		c.JSON(http.StatusOK, &v)
-	}
-	counter++
-}*/
 
 // Get Quote by ID
 func getQuoteByIdSQL(c *gin.Context) {
