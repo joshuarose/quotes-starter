@@ -77,44 +77,49 @@ func connectUnixSocket() error {
 func getRandomQuote(c *gin.Context) {
 	// Check if Api Header Key exists
 	if !xApiKey(c) {
-
-		row := db.QueryRow("select row from quotes order by random() limit 1")
-		q := &quote{}
-		err := row.Scan(&q.ID, &q.Quote, &q.Author)
-		if err != nil {
-			log.Println(err)
-		}
-		c.JSON(http.StatusOK, q)
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
 		return
 	}
-	c.JSON(http.StatusUnauthorized, gin.H{"message": " 401 Unauthorized"})
-	//return
+	row := db.QueryRow("select id from quotes order by rand() limit 1")
+	q := &quote{}
+	err := row.Scan(&q.ID, &q.Quote, &q.Author)
+	if err != nil {
+		log.Println(err)
+	}
+	c.JSON(http.StatusOK, q)
 
-	/*counter := 0
-	randomNumber := rand.Intn(len(quotesMap))
-
-	for _, v := range quotesMap {
-		if counter == randomNumber {
-			c.JSON(http.StatusOK, &v)
-		}
-		counter++
-	}*/
 }
+
+//return
+
+/*counter := 0
+randomNumber := rand.Intn(len(quotesMap))
+
+for _, v := range quotesMap {
+	if counter == randomNumber {
+		c.JSON(http.StatusOK, &v)
+	}
+	counter++
+}*/
 
 // Get Quote by ID
 func getQuoteByIdSQL(c *gin.Context) {
-	if xApiKey(c) {
-		id := c.Param("id")
-		row := db.QueryRow(fmt.Sprintf("select id, quote, author from quotes where id = '%s'", id))
-		q := &quote{}
-		err := row.Scan(&q.ID, &q.Quote, &q.Author)
-		if err != nil {
-			log.Println(err)
-		}
+	if !xApiKey(c) {
+		c.JSON(http.StatusUnauthorized, gin.H{"status": "401 Unauthorized"})
+		return
+	}
+	id := c.Param("id")
+	row := db.QueryRow(fmt.Sprintf("SELECT id, quote, author FROM quotes WHERE id = '%s'", id))
+	q := &quote{}
+	err := row.Scan(&q.ID, &q.Quote, &q.Author)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Quote ID not found"})
+	} else {
 		c.JSON(http.StatusOK, q)
 		return
 	}
-	c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+	//c.JSON(http.StatusUnauthorized, gin.H{"message": "unauthorized"})
+
 }
 
 // Create New Quote
