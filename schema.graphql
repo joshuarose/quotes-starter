@@ -1,0 +1,11 @@
+"A Quote is made up of id, quote and author"
+type Quote {
+id: String!
+quote: String!
+author: Author!
+}
+
+type Author {
+    id: String!
+    name: String!
+}
