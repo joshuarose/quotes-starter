@@ -1,12 +1,12 @@
 #https://gqlgen.com/getting-started/
 
-"A Quote is a phrase. It is made up of id, quote and author"
+#A Quote is a phrase. It is made up of id, quote and author
 type Quote {
-   "The id of a quote"
+  #The id of a quote
   id: String!
-  "The quote phrase"
+  #The quote phrase
   quote: String!
-  "The author a a quote"
+  #The author a a quote
   author: String!
 }
 
