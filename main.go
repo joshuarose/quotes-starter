@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	_ "github.com/99designs/gqlgen"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v4/stdlib"
