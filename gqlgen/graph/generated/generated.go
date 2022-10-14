@@ -139,12 +139,15 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "../schema.graphqls", Input: `
-#https://gqlgen.com/getting-started/
+	{Name: "../schema.graphqls", Input: `#https://gqlgen.com/getting-started/
 
+#A Quote is a phrase. It is made up of id, quote and author
 type Quote {
+  #The id of a quote
   id: String!
+  #The quote phrase
   quote: String!
+  #The author a a quote
   author: String!
 }
 `, BuiltIn: false},
