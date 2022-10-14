@@ -9,19 +9,3 @@ type Quote {
   #The author a a quote
   author: String!
 }
-
-type Query {
-  Quote{
-    id: String!
-    quote: String!
-    author: String!
-  }
-}
-
-type Query {
-  Quote{
-    id: String!
-    quote: String!
-    author: String!
-  }
-}
