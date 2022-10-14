@@ -9,3 +9,12 @@ type Quote {
   #The author a a quote
   author: String!
 }
+
+
+type Query {
+  #get a random quote
+  randomQuote: Quote!
+
+  #get a quote by id
+  quoteID(id: String!): Quote!
+}
