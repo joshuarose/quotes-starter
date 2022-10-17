@@ -1,0 +1,47 @@
+// GetRandomQuote is the resolver for the getRandomQuote field.
+func (r *queryResolver) GetRandomQuote(ctx context.Context) (*model.Quote, error) {
+	panic(fmt.Errorf("not implemented: GetRandomQuote - getRandomQuote"))
+}
+
+// GetQuoteByID is the resolver for the getQuoteById field.
+func (r *queryResolver) GetQuoteByID(ctx context.Context, id string) (*model.Quote, error) {
+	panic(fmt.Errorf("not implemented: GetQuoteByID - getQuoteById"))
+}
+
+// Query returns generated.QueryResolver implementation.
+func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
+
+type queryResolver struct{ *Resolver }
+
+
+/*func (r *queryResolver) Quote(ctx context.Context) (*model.Quote, error) {
+	// Try to return REST API ENDPOINTS before connecting to the database
+	// Query the endpoint of the getRandomQuote endpoint
+	response, err := http.Get("http://localhost:8080/")
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
+	}
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var responseObject Response
+	json.Unmarshal(responseData, &responseObject)
+
+	fmt.Println(responseObject.Name)
+	fmt.Println(len(responseObject.Quote))
+
+	for i := 0; i < len(responseObject.Quote); i++ {
+		fmt.Println(responseObject.Quote[i].Species.Name)
+	}
+	return responseObject, nil
+
+	/*quote := &model.Quote{
+		ID:     "12-3422-1-23432-009954",
+		Quote:  "I love being my authentic self",
+		Author: "Kalese Carpenter",
+	}
+	return quote, nil*/

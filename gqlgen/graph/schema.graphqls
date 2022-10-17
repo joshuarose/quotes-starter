@@ -2,21 +2,18 @@
 #
 # https://gqlgen.com/getting-started/
 
-type Quotes{
+type Quote {
   "The id of a quote"
   id: String!
   "All quotes are strings"
   quote: String!
   "Author is the creator of the quote"
-  author: Author!
+  author: String!
 }
 
-"Author of a Quote"
-type Author {
-"The id of the author"
-  id: ID!
-  "The name of the person who created the quote"
-  name: String!
-}
+type Query {
+  getRandomQuote: Quote!
+  quoteQuoteByID(id: String!) : Quote!
+} 
 
-#
+
