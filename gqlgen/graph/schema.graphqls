@@ -12,7 +12,9 @@ type Quote {
 }
 
 type Query {
+  "This is to query a random quote"
   getRandomQuote: Quote!
+  "This is to query a single quote by ID"
   quoteQuoteByID(id: String!) : Quote!
 } 
 
