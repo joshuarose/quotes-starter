@@ -45,12 +45,6 @@ func (r *mutationResolver) PostQuote(ctx context.Context, input model.NewQuote) 
 
 // DeleteQuote is the resolver for the deleteQuote field.
 func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*model.Quote, error) {
-	//getbyID, getQuoteErr := generated.QueryResolver.GetQuoteByID(r, ctx, id)
-	//Return full quote object
-	/*getQuoteRequest, quoteByIdObjectErr := http.NewRequest("GET", "http://34.160.48.181/quotes/"+id, nil)
-	if quoteByIdObjectErr != nil {
-		return nil, quoteByIdObjectErr
-	}*/
 
 	//Return full quote object so user can see what is being deleted
 	// Pull quote By ID from the database
@@ -89,13 +83,6 @@ func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*model.Q
 		return nil, deletedResponseError
 	}
 	return &quoteByID, nil
-
-	// return at the end of function if delete is successful
-
-	// Send a Response Status
-	//return response.StatusNotFound, nil
-
-	//return http.NotFound("This Quote Don't Even Exist Anymore! You Deleted It!", &deleteQuote), nil
 
 }
 
