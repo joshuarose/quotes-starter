@@ -15,8 +15,9 @@ type Query {
   "This is to query a random quote"
   getRandomQuote: Quote!
   "This is to query a single quote by ID"
-  quoteQuoteByID(id: String!) : Quote!
+  getQuoteByID(id: String!) : Quote!
 } 
+
 
 input QuoteInput {
  "Input a new quote to the database"
@@ -26,8 +27,8 @@ input QuoteInput {
 }
 
 type Mutation {
- "Create a new Quote"
- postQuote(input:QuoteInput!): Quote
+ "Create a new Quote in the database"
+ postQuote(input:QuoteInput!): Quote!
  "Remove a quote from database"
  deleteQuote(id: ID!): Boolean
 }
