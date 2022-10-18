@@ -18,4 +18,16 @@ type Query {
   quoteQuoteByID(id: String!) : Quote!
 } 
 
+input QuoteInput {
+ "Input a new quote to the database"
+ quote: String!
+ "Author is the creator of the quote"
+ author: String!
+}
 
+type Mutation {
+ "Create a new Quote"
+ postQuote(input:QuoteInput!): Quote
+ "Remove a quote from database"
+ deleteQuote(id: ID!): Boolean
+}
