@@ -4,14 +4,50 @@ package graph
 // will be copied through when generating and any unknown code will be moved to the end.
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/kalesecarpenter/quotes-starter/gqlgen/graph/generated"
 	"github.com/kalesecarpenter/quotes-starter/gqlgen/graph/model"
 )
+
+// PostQuote is the resolver for the postQuote field.
+func (r *mutationResolver) PostQuote(ctx context.Context, input model.NewQuote) (*model.Quote, error) {
+
+	// Struct for new quote
+	quote := &model.Quote{
+		Quote:  input.Quote,
+		Author: input.Author,
+	}
+	newQuote, _ := json.Marshal(&quote)
+	postBody := bytes.NewBuffer(newQuote)
+
+	// Post it to the datatbase SUCCESSFULY
+	request, _ := http.NewRequest("POST", "http://34.160.48.181/quotes", postBody)
+	request.Header.Set("x-api-key", "COCKTAILSAUCE")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// This gives the ID from the created quote
+	responseData, _ := io.ReadAll(response.Body)
+	json.Unmarshal(responseData, &quote)
+	// Send a Response Status
+	return quote, nil
+}
+
+// DeleteQuote is the resolver for the deleteQuote field.
+func (r *mutationResolver) DeleteQuote(ctx context.Context, id string) (*bool, error) {
+	panic(fmt.Errorf("not implemented: DeleteQuote - deleteQuote"))
+}
 
 // GetRandomQuote is the resolver for the getRandomQuote field.
 func (r *queryResolver) GetRandomQuote(ctx context.Context) (*model.Quote, error) {
@@ -38,7 +74,7 @@ func (r *queryResolver) GetRandomQuote(ctx context.Context) (*model.Quote, error
 	return &newGoQuote, nil
 }
 
-// GetQuoteByID is the resolver for the getQuoteById field.
+// GetQuoteByID is the resolver for the getQuoteByID field.
 func (r *queryResolver) GetQuoteByID(ctx context.Context, id string) (*model.Quote, error) {
 	// Add the ID to the end of the URL
 	requestURL := "http://34.160.48.181/quotes/" + id
@@ -64,7 +100,11 @@ func (r *queryResolver) GetQuoteByID(ctx context.Context, id string) (*model.Quo
 	return &singleQuote, nil
 }
 
+// Mutation returns generated.MutationResolver implementation.
+func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
+
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
