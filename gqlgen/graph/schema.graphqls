@@ -26,15 +26,10 @@ input NewQuote {
  author: String!
 }
 
-
 type Mutation {
  "Create a new Quote in the database"
  postQuote(input:NewQuote!): Quote!
  "Remove a quote from database"
- deleteQuote(id: ID!): Boolean
+ deleteQuote(id: ID!): Quote!
 }
 
-type ResponseMessage {
-  "This is the reponse back from a POST REQUEST"
-  message: String!
-}
